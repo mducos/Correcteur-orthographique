@@ -5,6 +5,8 @@ def recherche(tree_file, word):
     Fonction qui, à partir du fichier contenant l'arbre du vocabulaire
     et d'un mot, cherche dans l'arbre si le mot y est présent.
     La fonction retourne un booléen.
+    "xylophone" → True
+    "xylopone" → False
     '''
 
     # chargement du fichier
