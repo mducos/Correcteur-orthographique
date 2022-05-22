@@ -1,6 +1,25 @@
-from audioop import add
 import sys
 from unicodedata import category
+import json
+
+# DECLARATION DES VARIABLES GLOBALES 
+'''
+Les déclarer fait baisser significativement la complexité en temps de
+toutes les fonctions.
+'''
+    # chargement du dictionnaire
+tree = open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", "r", encoding="utf-8").readlines()
+tree = tree[0]
+tree = json.loads(tree)
+
+    # récupération de tous les signes de ponctuation existant grâce à leur unicode car les catégories unicode P* sont destinées à la ponctuation
+chrs = (chr(i) for i in range(sys.maxunicode + 1))
+punctuation = set(c for c in chrs if category(c).startswith("P"))
+
+    # lecture du fichier 
+lines = open("C:/Users/carol/Desktop/L3/Projet_TAL/Lexique383/Lexique383.tsv", "r", encoding="utf-8").readlines()
+
+
 
 def addSpace(str):
     '''
@@ -14,9 +33,7 @@ def addSpace(str):
     “Bonjour . Comment allez-vous ? ”
     '''
 
-    # récupération de tous les signes de ponctuation existant grâce à leur unicode car les catégories unicode P* sont destinées à la ponctuation
-    chrs = (chr(i) for i in range(sys.maxunicode + 1))
-    punctuation = set(c for c in chrs if category(c).startswith("P"))
+    global punctuation
 
     # on parcourt tous les caractères du string
     for char in str:
@@ -29,7 +46,7 @@ def addSpace(str):
     
     return str
 
-def twoWordsInOne(file):
+def twoWordsInOne():
     '''
     Fonction qui prend en argument le dictionnaire et renvoie un
     ensemble de strings contenant les mots qui possèdent un espace 
@@ -40,12 +57,10 @@ def twoWordsInOne(file):
             a priori
             apporter)
     '''
-    
+    global lines
+
     # création de l'ensemble
     twoWords = set()
-
-    # lecture du fichier 
-    lines = open(file, "r", encoding="utf-8").readlines()
 
     # pour chaque ligne du fichier (la première ligne étant le nom des colonnes, on l'enlève)
     for line in lines[1:]:
@@ -60,7 +75,7 @@ def twoWordsInOne(file):
 
     return twoWords
 
-def dashInWord(file):
+def dashInWord():
     '''
     Fonction qui prend en argument le dictionnaire et renvoie un
     ensemble de strings contenant les mots qui possèdent un tiret 
@@ -71,12 +86,10 @@ def dashInWord(file):
             porte-clé
             portable)
     '''
-    
+    global lines
+
     # création de l'ensemble
     wordWithDash = set()
-
-    # lecture du fichier 
-    lines = open(file, "r", encoding="utf-8").readlines()
 
     # pour chaque ligne du fichier (la première ligne étant le nom des colonnes, on l'enlève)
     for line in lines[1:]:
@@ -108,7 +121,7 @@ def corpusToList(corpus):
     corpus = addSpace(corpus)
 
     # on stocke l'ensemble des mots contenant un espace
-    wordWithSpace = twoWordsInOne("C:/Users/carol/Desktop/L3/Projet_TAL/Lexique383/Lexique383.tsv")
+    wordWithSpace = twoWordsInOne()
     
     # pour chaque mot de cet ensemble, on vérifie s'il est dans le corpus
     for word in wordWithSpace:
@@ -130,7 +143,7 @@ def corpusToList(corpus):
             corpus[i] = corpus[i].replace("*", " ")
 
     # on stocke l'ensemble des mots contenant un tiret
-    wordWithDash = dashInWord("C:/Users/carol/Desktop/L3/Projet_TAL/Lexique383/Lexique383.tsv")
+    wordWithDash = dashInWord()
     
     # pour chaque mot du corpus
     for i in range(len(corpus)):
@@ -150,3 +163,55 @@ def corpusToList(corpus):
 
     return corpus
 
+def rechercheWordDict(word):
+    '''
+    Fonction qui prend un String en argument et renvoie un booléen, 
+    vrai si le String est présent dans le dictionnaire, faux s’il 
+    n’y est pas. Pour cela, il faut que le mot comparé soit totalement 
+    en minuscule (mais il ne faut pas que le mot lui-même ait été 
+    modifié). Si le string est un signe de ponctuation, il n’est pas 
+    comparé.
+
+    "Xylophone" → True
+    "xylophone" → True
+    "xylopone" → False
+    '''
+    global tree
+    global punctuation
+
+    # si le mot n'est pas un signe de ponctuation
+    if not(word in punctuation):
+        # on parcourt chaque lettre du mot pour vérifier qu'elles sont des noeuds/feuilles dans l'arbre
+        return recherche_letter(tree, word.lower())
+
+
+def recherche_letter(tree, word):
+    '''
+    Fonction qui prend un arbre lexicologique et un String en argument 
+    et renvoie un booléen, vrai si le String est présent dans l'arbre,
+    faux s'il n'y est pas.
+    "xylophone" → True
+    "xylopone" → False
+    '''
+
+    # cas de base : on lit la dernière lettre du mot
+    if len(word) == 1:
+        # la suite de lettres est dans l'arbre et la dernière lettre est finale donc c'est un mot du dictionnaire
+        if "*" in tree[word]:
+            return True
+        # la suite de lettres est dans l'arbre mais la dernière lettre n'est pas finale donc ce n'est pas un mot du dictionnaire
+        else:
+            return False
+    # si la première lettre est dans les clés du dictionnaire, on poursuit la recherche
+    elif word[0] in tree:
+        return recherche_letter(tree[word[0]], word[1:])
+    # si elle n'y est pas, on peut dès à présent retourner faux
+    else:
+        return False
+
+
+# exemple pour tester
+corpus = "Pour ceux qui ont la décence de ne pas avoir Facebook, je vous résume. Loudblast (groupe de death français) qui fait une publi pour mettre en avant un t-shirt de Hatecouture (une page de t-shirt cynique bête et méchant) avec la gueule d'Emile Louis.Jean Peu Plus de cette culture de la provoc' à trois balle de la sc metal..."
+list = corpusToList(corpus)
+for word in list:
+    print(word, rechercheWordDict(word))
