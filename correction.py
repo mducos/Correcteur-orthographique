@@ -19,7 +19,30 @@ punctuation = set(c for c in chrs if category(c).startswith("P"))
     # lecture du fichier 
 lines = open("C:/Users/carol/Desktop/L3/Projet_TAL/Lexique383/Lexique383.tsv", "r", encoding="utf-8").readlines()
 
+def typeOfCorrection(corpus):
+    '''
+    Fonction de départ qui demande à l'utilisateur quel type de 
+    correction il souhaite entre une correction automatique et une 
+    correction intéractive.
+    Cette fonction lance toutes les suivantes pour effectuer la 
+    correction souhaitée, et retourne le corpus corrigé.
+    '''
+    # initialisation de la variable
+    type = ""
+    # tant que l'utilisateur n'a pas répondu correctement à la question, celle-ci est reposée
+    while type == "":
+        # question posée pour déterminer si la correction sera automatique ou intéractive
+        answer = input("Quel type de correction voulez-vous ? 'automatique' ou 'intéractif' ?\n")
+        # si la réponse donnée par l'utilisateur est "automatique"
+        if answer == "automatique":
+            # on stocke cette réponse
+            type = "automatique"
+        # si la réponse donnée par l'utilisateur est "intéractif"
+        elif answer == "intéractif":
+            # on stocke cette réponse
+            type = "intéractif"
 
+    return corpusToList(corpus)
 
 def addSpace(str):
     '''
@@ -32,7 +55,6 @@ def addSpace(str):
     “Bonjour. Comment allez-vous ?” → 
     “Bonjour . Comment allez-vous ? ”
     '''
-
     global punctuation
 
     # on parcourt tous les caractères du string
@@ -209,9 +231,12 @@ def recherche_letter(tree, word):
     else:
         return False
 
+import numpy as np
 
-# exemple pour tester
-corpus = "Pour ceux qui ont la décence de ne pas avoir Facebook, je vous résume. Loudblast (groupe de death français) qui fait une publi pour mettre en avant un t-shirt de Hatecouture (une page de t-shirt cynique bête et méchant) avec la gueule d'Emile Louis.Jean Peu Plus de cette culture de la provoc' à trois balle de la sc metal..."
-list = corpusToList(corpus)
+
+
+
+corpus = "Pour ceux qui ont la décence de ne pas avoir Facebook, je vous résume. Loudblast (groupe de death français) qui fait une publi pour mettre en avant un t-shirt de Hatecouture (une page de t-shirt cynique bête et méchant) avec la gueule d'Emile Louis.Jean Peu Plus de cette culture de la provoc' à trois balle de la sc metal... a cappella."
+list = typeOfCorrection(corpus)
 for word in list:
-    print(word, rechercheWordDict(word))
+    print(word, rechercheWordDict(word), end=", ")
