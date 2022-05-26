@@ -1,5 +1,12 @@
 import json
 
+# chargement du fichier
+tree = open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", "r", encoding="utf-8").readlines()
+# comme .readlines() crée un tableau, il faut prendre sa seule composante pour avoir le dictionnaire
+tree = tree[0]
+# conversion du dictionnaire à l'aide de json 
+tree = json.loads(tree)
+
 def recherche(tree_file, word):
     '''
     Fonction qui, à partir du fichier contenant l'arbre du vocabulaire
@@ -23,10 +30,13 @@ def recherche(tree_file, word):
 def recherche_letter(tree, word):
     # cas de base : on lit la dernière lettre du mot
     if len(word) == 1:
-        # la suite de lettres est dans l'arbre et la dernière lettre est finale donc c'est un mot du dictionnaire
+        # si la suite de lettres est dans l'arbre mais la dernière lettre n'y est pas donc ce n'est pas un mot du dictionnaire
+        if not(word in tree):
+            return False
+        # si la suite de lettres est dans l'arbre et la dernière lettre est finale donc c'est un mot du dictionnaire
         if "*" in tree[word]:
             return True
-        # la suite de lettres est dans l'arbre mais la dernière lettre n'est pas finale donc ce n'est pas un mot du dictionnaire
+        # si la suite de lettres est dans l'arbre mais la dernière lettre n'est pas finale donc ce n'est pas un mot du dictionnaire
         else:
             return False
     # si la première lettre est dans les clés du dictionnaire, on poursuit la recherche
@@ -36,5 +46,7 @@ def recherche_letter(tree, word):
     else:
         return False
 
-word = "xylophone"
+word = "maiss"
 print(recherche("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", word))
+
+print(recherche_letter(tree, word))
