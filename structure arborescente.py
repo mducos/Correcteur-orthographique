@@ -12,9 +12,9 @@ def vocab2tree(file):
     vers des dictionnaires.
     Lorsqu'un mot se termine, la valeur est un dictionnaire vide.
     Schéma :
-    {"a": {"r": {"b": {"r": {"e": {"*": {}}
-                             "i": {"s": {"s": {"a": {"u": {"t": {"*": {}}}}}}}}}}
-           "v": {"o": {"i": {"r": {"*": {}}}}}}, 
+    {"a": {"r": {"b": {"r": {"e": {1.1e-08: {}}
+                             "i": {"s": {"s": {"a": {"u": {"t": {1.8e-09: {}}}}}}}}}}
+           "v": {"o": {"i": {"r": {3.4e-07: {}}}}}}, 
      "b": {...}
     }
     '''
@@ -31,11 +31,12 @@ def vocab2tree(file):
         # chaque colonne étant séparée par une tabulation, on les récupère dans une liste
         line = line.split("\t")
 
-        # simplification des variables auxquelles on ajoute un * pour signifier une fin de mot (caractère unique comme <f>)
+        # simplification des variables, on ajoute un * au mot pour signifier une fin de mot (caractère unique comme <f>)
         word = line[0] + "*"
+        freq_rel = (float(line[8]) + float(line[9])) / (2*10e6)
 
         # création des clés correspondant à la première lettre de chaque mot, par récurrence
-        letter2letter_maker(word, voca2tree)
+        letter2letter_maker(word, voca2tree, freq_rel)
     
     # sérialization à l'aide de json (ie enregistrement dans un fichier pour pouvoir l'utiliser plus tard dans d'autres programmes)
     with open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", "w", encoding='utf-8' ) as df: # chemin d'accès pour Mathilde
@@ -44,7 +45,7 @@ def vocab2tree(file):
 
 
 
-def letter2letter_maker(word, letter2letter):
+def letter2letter_maker(word, letter2letter, freq_rel):
     '''
     Fonction définie par récursion qui, à partir d'un mot, construit 
     la suite de dictionnaire qui y correspond.
@@ -52,20 +53,28 @@ def letter2letter_maker(word, letter2letter):
     '''
     # cas de base, si le mot est fini on retourne un dictionnaire vide
     if len(word) == 1:
-        # si le mot n'existait pas déjà, on crée la feuille en la rendant terminal
-        if not(word[0] in letter2letter):
-            letter2letter[word[0]] = dict()
-        # si le mot existait déjà dans le dictionnaire sur un noeud mais qu'il ne terminait pas, on le rend terminal
-        else:
-            letter2letter = {**letter2letter[word[0]], **dict()}
+        # pour toutes les clés déjà présentes
+        for key in letter2letter:
+            # si une clé est un float, c'est-à-dire si le mot est déjà présent dans l'arbre (ce qui arrive pour les mots avec plusieurs catégories syntaxiques)
+            if isinstance(key, float):
+                # somme des fréquences relatives
+                freq_rel = freq_rel + key
+                # suppression de l'ancienne fréquence relative
+                del letter2letter[key]
+                # création de la nouvelle clé avec la fréquence relative
+                letter2letter[freq_rel + key] = dict()
+                return letter2letter
+        # si aucune clé n'est un float, ie si le mot n'est pas déjà présent dans l'arbre, création de la feuille avec la fréquence relative du mot
+        letter2letter[freq_rel] = dict()
         return letter2letter
+        
     # si le mot n'est pas fini, on construit le dictionnaire qui correspond au reste du mot
     else:
         # si le noeud de la lettre n'existe pas, on la crée
         if not(word[0] in letter2letter):
             letter2letter[word[0]] = dict()
         # on entre dans le sous-arbre relié par le noeud et on continue la lecture du mot
-        letter2letter[word[0]] = {**letter2letter[word[0]], **letter2letter_maker(word[1:], letter2letter[word[0]])}
+        letter2letter[word[0]] = {**letter2letter[word[0]], **letter2letter_maker(word[1:], letter2letter[word[0]], freq_rel)}
         return letter2letter
 
 
