@@ -1,13 +1,9 @@
 import json
 
 # chargement du fichier
-tree = open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", "r", encoding="utf-8").readlines()
-# comme .readlines() crée un tableau, il faut prendre sa seule composante pour avoir le dictionnaire
-tree = tree[0]
-# conversion du dictionnaire à l'aide de json 
-tree = json.loads(tree)
+tree = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", "r", encoding="utf-8").readlines()[0])
 
-def recherche(tree_file, word):
+def recherche_word(tree, word):
     '''
     Fonction qui, à partir du fichier contenant l'arbre du vocabulaire
     et d'un mot, cherche dans l'arbre si le mot y est présent.
@@ -16,37 +12,24 @@ def recherche(tree_file, word):
     "xylopone" → False
     '''
 
-    # chargement du fichier
-    tree = open(tree_file, "r", encoding="utf-8").readlines()
-    # comme .readlines() crée un tableau, il faut prendre sa seule composante pour avoir le dictionnaire
-    tree = tree[0]
-    # conversion du dictionnaire à l'aide de json 
-    tree = json.loads(tree)
-
-    # on parcourt chaque lettre du mot pour vérifier qu'elles sont des noeuds/feuilles dans l'arbre
-    return recherche_letter(tree, word)
-
-
-def recherche_letter(tree, word):
     # cas de base : on lit la dernière lettre du mot
     if len(word) == 1:
-        # si la suite de lettres est dans l'arbre mais la dernière lettre n'y est pas donc ce n'est pas un mot du dictionnaire
+        # la suite de lettres est dans l'arbre mais la dernière lettre n'y est pas donc ce n'est pas un mot du dictionnaire
         if not(word in tree):
             return False
-        # si la suite de lettres est dans l'arbre et la dernière lettre est finale donc c'est un mot du dictionnaire
-        if "*" in tree[word]:
-            return True
-        # si la suite de lettres est dans l'arbre mais la dernière lettre n'est pas finale donc ce n'est pas un mot du dictionnaire
-        else:
-            return False
+        # la suite de lettres est dans l'arbre alors pour toutes les clés dans l'arbre
+        for key in tree[word]:
+            # vérifier si, en enlevant la virgule, la clé est un int et non un string
+            if key.replace(".", "").isdigit:
+                return True
+        # la suite de lettres est dans l'arbre mais la dernière lettre n'est pas finale donc ce n'est pas un mot du dictionnaire
+        return False
     # si la première lettre est dans les clés du dictionnaire, on poursuit la recherche
     elif word[0] in tree:
-        return recherche_letter(tree[word[0]], word[1:])
+        return recherche_word(tree[word[0]], word[1:])
     # si elle n'y est pas, on peut dès à présent retourner faux
     else:
         return False
 
-word = "maiss"
-print(recherche("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", word))
-
-print(recherche_letter(tree, word))
+word = "douter"
+print(recherche_word(tree, word))
