@@ -78,7 +78,7 @@ def corpusToList(corpus):
     # on commence par ajouter les espaces autour des signes de ponctuation
     corpus = addSpace(corpus)
     
-    # pour chaque mot de cet ensemble, on vérifie s'il est dans le corpus
+    # pour chaque mot de l'ensemble des mots à 2 composés, on vérifie s'il est dans le corpus
     for word in wordsWithSpace:
         if word in corpus.lower():
             # s'il y est, on change l'espace en un signe présent dans aucun mot pour pouvoir le reconnaître plus tard
@@ -140,12 +140,13 @@ def rechercheWordDict(word):
 def rechercheWordRec(tree, word):
     '''
     Fonction qui, à partir du fichier contenant l'arbre du vocabulaire
-    et d'un mot, cherche dans l'arbre si le mot y est présent.
+    et d'un mot, cherche dans l'arbre si le mot y est présent. S'il l'est,
+    cette fonction renvoie la fréquence du mot.
     La fonction retourne un booléen.
-    "xylophone" → True
+    "xylophone" → 2.2e-8
     "xylopone" → False
     '''
-    
+
     # cas de base : on lit la dernière lettre du mot
     if len(word) == 1:
         # la suite de lettres est dans l'arbre mais la dernière lettre n'y est pas donc ce n'est pas un mot du dictionnaire
@@ -160,6 +161,9 @@ def rechercheWordRec(tree, word):
             except:
                 pass
         # la suite de lettres est dans l'arbre mais la dernière lettre n'est pas finale donc ce n'est pas un mot du dictionnaire
+        return False
+    # si les opérations ont généré le mot vide
+    elif len(word) == 0:
         return False
     # si la première lettre est dans les clés du dictionnaire, on poursuit la recherche
     elif word[0] in tree:
@@ -270,6 +274,7 @@ def correction(word):
 
     # ensemble des mots dans le dictionnaire à partir des mots distants de 0 du mot de base
     word_distance0 = known([word])
+    print("0", word, word_distance0) # TODO
     # si au moins un mot parmi cet ensemble est dans le dictionnaire
     if len(word_distance0) > 0:
         # retourne le mot qui a la probabilité maximum
@@ -277,6 +282,7 @@ def correction(word):
 
     # ensemble des mots dans le dictionnaire à partir des mots distants de 1 du mot de base
     word_distance1 = known(edits1(word))
+    print("1", word, word_distance1) # TODO
     # si au moins un mot parmi cet ensemble est dans le dictionnaire
     if len(word_distance1) > 0:
         # retourne le mot qui a la probabilité maximum
@@ -284,13 +290,14 @@ def correction(word):
 
     # ensemble des mots dans le dictionnaire à partir des mots distants de 2 du mot de base
     word_distance2 = known(edits2(word))
+    print("2", word, word_distance2) # TODO
     # si au moins un mot parmi cet ensemble est dans le dictionnaire
     if len(word_distance2) > 0:
         # retourne le mot qui a la probabilité maximum
         return max(word_distance2, key=probabilite)
 
     # si aucun mot d'une distance de 2 ou moins n'a été trouvé, 
-    return (word, "not found")
+    return "not found"
 
 
 
@@ -327,6 +334,50 @@ def typeOfCorrection(corpus):
 
     return corpusToList(corpus)
 
+def readCorpus(file):
+
+    open("C:/Users/carol/Desktop/L3/Projet_TAL/corpus_lemmatise.conll", "w", encoding="utf-8").write("")
+
+    with open("C:/Users/carol/Desktop/L3/Projet_TAL/corpus_lemmatise.conll", "a", encoding="utf-8") as f:
+        f.write("# global.columns = ID FORM CORRECTED_FORM NOT_FOUND\n")
+
+        # lecture du corpus dans lequel se trouvent des fautes d'orthographes
+        lines = open(file, encoding="utf-8").readlines()
+        # pour chaque ligne dans ce fichier
+        for line in lines:
+            # si cette ligne est un saut de ligne ou une ligne de commentaire
+            if line == "\n" or line[0] == "#":
+                # on la réécrit telle quelle dans le fichier
+                f.write(line)
+            # si la ligne présente une phrase à corriger
+            else:
+                # tokenisation de la ligne
+                list_lemme = (corpusToList(line))
+                # pour chaque élément dans cette liste tokenisée
+                for id in range(len(list_lemme)):
+                    # si le mot n'existe pas
+                    if rechercheWordDict(list_lemme[id]) == False:
+                        # enregistrement de la forme juste la plus probable du mot fautif
+                        corrected = correction(list_lemme[id].lower())
+                        # si la forme juste la plus probable n'a pas été trouvée
+                        if corrected == "not found":
+                            # on réécrit le mot tel quel dans le fichier
+                            f.write(str(id+1) + "\t" + list_lemme[id] + "\t" + list_lemme[id] + "\t" + corrected + "\n")
+                        # si une forme juste la plus probable a été trouvée
+                        else:
+                            # pour chaque lettre dans le mot
+                            for letter_id in range(len(min(corrected, list_lemme[id], key=len))):
+                                # si une majuscule était présente dans la phrase d'origine
+                                if list_lemme[id][letter_id] == list_lemme[id][letter_id].upper():
+                                    # on modifie le mot juste en y ajoutant la majuscule sur la bonne lettre
+                                    corrected = corrected.replace(corrected[letter_id], corrected[letter_id].upper())
+                            # on écrit le mot corrigé dans le fichier
+                            f.write(str(id+1) + "\t" + list_lemme[id] + "\t" + corrected + "\t" + "_" + "\n")
+                    # si le mot existe
+                    else:
+                        # on le réécrit dans le fichier
+                        f.write(str(id+1) + "\t" + list_lemme[id] + "\t" + list_lemme[id] + "\t" + "_"  + "\n")
+
 
 
 
@@ -334,22 +385,4 @@ def typeOfCorrection(corpus):
 # LANCEMENT DU PROGRAMME DE CORRECTION
 
 
-
-
-
-'''Hallo ceux qui ont la décence de ne pas avoir Facebook, je vous résume. 
-Loudblast (groupe de death français) qui fait une publi pour mettre en 
-avant un t-shirt de Hatecouture (une page de t-shirt cynique bête et 
-méchant) avec la gueule d'Emile Louis.Jean Peu Plus de cette culture 
-de la provoc' à trois balle de la sc metal... a cappella.'''
-
-corpus = "Hallo Pour ceux qui ont la décence de ne pas avoir Facebook, je vous résume. Loudblast (groupe de death français) qui fait une publi pour mettre en avant un t-shirt de Hatecouture (une page de t-shirt cynique bête et méchant) avec la gueule d'Emile Louis.Jean Peu Plus de cette culture de la provoc' à trois balle de la sc metal... a cappella. haute-couture"
-list = typeOfCorrection(corpus)
-for word in list:
-    if rechercheWordDict(word) == False:
-        print(word, "→", correction(word))
-    else:
-        print(word)
-
-
-# TODO : voir si on ne peut pas intégrer la fonction de freq rel à celle de recherche rec pour gagner du temps d'exécution (pas sûre que ce soit possible)
+readCorpus("C:/Users/carol/Desktop/L3/Projet_TAL/corpus.conll")
