@@ -17,9 +17,10 @@ Les déclarer fait baisser significativement la complexité en temps de
 toutes les fonctions.
 '''
     # chargement des fichiers
-tree = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.ttl", "r", encoding="utf-8").readlines()[0])
-wordsWithSpace = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/two_words_in_one.ttl", "r", encoding="utf-8").readlines()[0])
-wordsWithDash = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/words_with_dash.ttl", "r", encoding="utf-8").readlines()[0])
+tree = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.json", "r", encoding="utf-8").readlines()[0])
+wordsWithSpace = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/two_words_in_one.json", "r", encoding="utf-8").readlines()[0])
+wordsWithDash = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/words_with_dash.json", "r", encoding="utf-8").readlines()[0])
+wordsWithApostrophe = json.loads(open("C:/Users/carol/Desktop/L3/Projet_TAL/words_with_apostrophe.json", "r", encoding="utf-8").readlines()[0])
 
     # récupération de tous les signes de ponctuation existant grâce à leur unicode car les catégories unicode P* sont destinées à la ponctuation
 chrs = (chr(i) for i in range(sys.maxunicode + 1))
@@ -74,24 +75,38 @@ def corpusToList(corpus):
 
     global wordsWithDash
     global wordsWithSpace
+    global wordsWithApostrophe
 
-    # on commence par ajouter les espaces autour des signes de ponctuation
-    corpus = addSpace(corpus)
-    
-    # pour chaque mot de l'ensemble des mots à 2 composés, on vérifie s'il est dans le corpus
-    for word in wordsWithSpace:
-        if word in corpus.lower():
-            # s'il y est, on change l'espace en un signe présent dans aucun mot pour pouvoir le reconnaître plus tard
-            corpus = corpus.replace(word, word.replace(" ", "*"))
+    # pour chaque mot de l'ensemble des mots avec une apostrophe de plus de 2 caractères (pour enlever les "l'" et "d'"), on vérifie s'il est dans le corpus
+    for word in wordsWithApostrophe:
+        if word in corpus.lower() and len(word) > 2:
+            # s'il y est, on change l'apostrophe en un signe présent dans aucun mot pour pouvoir le reconnaître plus tard
+            corpus = corpus.replace(word, word.replace("'", "$"))
             # mais si le mot a une majuscule au début, il faut le traiter ainsi
             word = word[0].upper() + word[1:]
-            corpus = corpus.replace(word, word.replace(" ", "*"))
+            corpus = corpus.replace(word, word.replace("'", "$"))
+
+    # ajout des espaces autour des signes de ponctuation
+    corpus = addSpace(corpus)
+
+    # pour chaque mot de l'ensemble des mots à 2 composés, on vérifie s'il est dans le corpus
+    for word in wordsWithSpace:
+        # on doit faire comme si les apostrophes étaient sous forme d'apostrophe
+        if word in corpus.replace("$", "'").lower():
+            # s'il y est, on change l'espace en un signe présent dans aucun mot pour pouvoir le reconnaître plus tard
+            corpus = corpus.replace(word.replace("'", "$"), word.replace("'", "$").replace(" ", "*"))
+            # mais si le mot a une majuscule au début, il faut le traiter ainsi
+            word = word[0].upper() + word[1:]
+            corpus = corpus.replace(word.replace("'", "$"), word.replace("'", "$").replace(" ", "*"))
 
     # en splitant, les composants d'un mot qui contient originellement un espace ne sont plus séparés
     corpus = corpus.split()
-
     # pour chaque mot du corpus
     for i in range(len(corpus)):
+        # s'il contient * signifie que c'est un mot à plusieurs composants
+        if "$" in corpus[i]:
+            # on remet l'espace
+            corpus[i] = corpus[i].replace("$", "'")
         # s'il contient * signifie que c'est un mot à plusieurs composants
         if "*" in corpus[i]:
             # on remet l'espace
@@ -274,7 +289,6 @@ def correction(word):
 
     # ensemble des mots dans le dictionnaire à partir des mots distants de 0 du mot de base
     word_distance0 = known([word])
-    print("0", word, word_distance0) # TODO
     # si au moins un mot parmi cet ensemble est dans le dictionnaire
     if len(word_distance0) > 0:
         # retourne le mot qui a la probabilité maximum
@@ -282,7 +296,6 @@ def correction(word):
 
     # ensemble des mots dans le dictionnaire à partir des mots distants de 1 du mot de base
     word_distance1 = known(edits1(word))
-    print("1", word, word_distance1) # TODO
     # si au moins un mot parmi cet ensemble est dans le dictionnaire
     if len(word_distance1) > 0:
         # retourne le mot qui a la probabilité maximum
@@ -290,7 +303,6 @@ def correction(word):
 
     # ensemble des mots dans le dictionnaire à partir des mots distants de 2 du mot de base
     word_distance2 = known(edits2(word))
-    print("2", word, word_distance2) # TODO
     # si au moins un mot parmi cet ensemble est dans le dictionnaire
     if len(word_distance2) > 0:
         # retourne le mot qui a la probabilité maximum
@@ -386,3 +398,8 @@ def readCorpus(file):
 
 
 readCorpus("C:/Users/carol/Desktop/L3/Projet_TAL/corpus.conll")
+
+
+# TODO : voir si on ne peut pas intégrer la fonction de freq rel à celle de recherche rec pour gagner du temps d'exécution (pas sûre que ce soit possible)
+# piste d'amélioration : utiliser la phonétique des mots pour trouver les mots les plus proches phonétiquement ? par exemple "fote" sera corrigé en "fête" au lieu de "faute"
+# on peut aussi privilégier certains types de fautes : par exemple les inversions de 2 lettres (maisno) ou des dédoublements de consonnes (fraper) ou des changements d'accent (râclement) ou le len le plus proche
