@@ -1,4 +1,5 @@
-import json
+import requests
+
 # lecture du dictionnaire sous format tsv 
 lines = requests.get("https://raw.githubusercontent.com/mducos/Correcteur-orthographique/main/ressources/Lexique383.tsv").text.split("\n")
 
