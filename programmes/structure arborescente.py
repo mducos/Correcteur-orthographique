@@ -1,4 +1,6 @@
 import json
+# lecture du dictionnaire sous format tsv 
+lines = requests.get("https://raw.githubusercontent.com/mducos/Correcteur-orthographique/main/ressources/Lexique383.tsv").text.split("\n")
 
 def vocab2tree(file):
     '''
@@ -19,15 +21,13 @@ def vocab2tree(file):
     }
     '''
 
-    # lecture du fichier 
-    lines = open(file, "r", encoding="utf-8").readlines()
+    global lines
 
     # création de la structure arborescente
     voca2tree = dict()
 
-    # pour chaque ligne du fichier (la première ligne étant le nom des colonnes, on l'enlève)
-    for line in lines[1:]:
-
+    # pour chaque ligne du fichier (la première ligne étant le nom des colonnes, on l'enlève) jusqu'au dernier mot
+    for line in lines[1:142695]:
         # chaque colonne étant séparée par une tabulation, on les récupère dans une liste
         line = line.split("\t")
 
@@ -37,13 +37,8 @@ def vocab2tree(file):
 
         # création des clés correspondant à la première lettre de chaque mot, par récurrence
         letter2letter_maker(word, voca2tree, freq_rel)
-    
-    # sérialization à l'aide de json (ie enregistrement dans un fichier pour pouvoir l'utiliser plus tard dans d'autres programmes)
-    with open("C:/Users/carol/Desktop/L3/Projet_TAL/structure_arborescente.json", "w", encoding='utf-8' ) as df: # chemin d'accès pour Mathilde
-    #with open("", "w", encoding='utf-8' ) as df: # chemin d'accès pour Xin
-        json.dump(voca2tree, df, ensure_ascii=False)
 
-
+    return voca2tree
 
 def letter2letter_maker(word, letter2letter, freq_rel):
     '''
@@ -51,6 +46,7 @@ def letter2letter_maker(word, letter2letter, freq_rel):
     la suite de dictionnaire qui y correspond.
     "avoir" → {'a': {'v': {'o': {'i': {'r': {'0.002': {}}}}}}}
     '''
+    
     # cas de base, si le mot est fini on retourne un dictionnaire vide
     if len(word) == 1:
         # pour toutes les clés déjà présentes
@@ -64,13 +60,19 @@ def letter2letter_maker(word, letter2letter, freq_rel):
                 # création de la nouvelle clé avec la fréquence relative
                 letter2letter[freq_rel + key] = dict()
                 return letter2letter
-        # si aucune clé n'est un float, ie si le mot n'est pas déjà présent dans l'arbre, création de la feuille avec la fréquence relative du mot
+        # si aucune clé n'est un float, ie si le mot n'est pas déjà présent dans l'arbre, création de la feuille avec la fréquence relative du mot en clé
         letter2letter[freq_rel] = dict()
         return letter2letter
         
     # si le mot n'est pas fini, on construit le dictionnaire qui correspond au reste du mot
     else:
         # si le noeud de la lettre n'existe pas, on la crée
+        if not(word[0] in letter2letter):
+            letter2letter[word[0]] = dict()
+        # on entre dans le sous-arbre relié par le noeud et on continue la lecture du mot
+        letter2letter[word[0]] = {**letter2letter[word[0]], **letter2letter_maker(word[1:], letter2letter[word[0]], freq_rel)}
+        return letter2letter
+    
         if not(word[0] in letter2letter):
             letter2letter[word[0]] = dict()
         # on entre dans le sous-arbre relié par le noeud et on continue la lecture du mot
