@@ -76,8 +76,3 @@ def letter2letter_maker(word, letter2letter, freq_rel):
         # on entre dans le sous-arbre relié par le noeud et on continue la lecture du mot
         letter2letter[word[0]] = {**letter2letter[word[0]], **letter2letter_maker(word[1:], letter2letter[word[0]], freq_rel)}
         return letter2letter
-
-
-
-vocab2tree("C:/Users/carol/Desktop/L3/Projet_TAL/Lexique383/Lexique383.tsv") # chemin d'accès pour Mathilde
-#vocab2tree("") # chemin d'accès pour Xin
