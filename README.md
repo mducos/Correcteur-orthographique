@@ -46,5 +46,5 @@ De plus, nous avons remarqué que la probabilité de chaque mot ne donne parfois
 
 ## Comment utiliser le programme
 
-Bien que toutes les fonctions sont séparées dans le dossier **Programmes**, elles sont regroupées dans le fichier ... qu'il suffit de lancer pour corriger le texte mis dans la variable *corpus_pred*. Pour choisir soi-même le fichier texte à corriger, il suffit de changer son chemin d'accès.
+Bien que toutes les fonctions sont séparées dans le dossier **Programmes**, elles sont regroupées dans le fichier https://github.com/mducos/Correcteur-orthographique/blob/main/correcteur_orthographique.py qu'il suffit de lancer pour corriger le texte mis dans la variable *corpus_pred*. Pour choisir soi-même le fichier texte à corriger, il suffit de changer son chemin d'accès.
 
